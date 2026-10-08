@@ -46,38 +46,99 @@ When filtering by State or District, always use uppercase values.
 
 export async function generateMongoQuery(question) {
   const prompt = `
-You are a MongoDB query generator for a rainfall analytics system.
+You are the query and visualization planner for a rainfall analytics system.
 
 ${DATASET_SCHEMA}
 
 User question:
 "${question}"
 
-Generate a MongoDB query that answers the user's question.
+Your job has TWO parts:
 
-Rules:
+PART 1 — Generate a MongoDB query
+PART 2 — Decide the most useful visualization for the result.
+
+Return ONLY valid JSON.
+
+The JSON must have this exact structure:
+
+{
+  "query": {
+    "operation": "find" | "aggregate",
+    "filter": {},
+    "projection": {},
+    "sort": {},
+    "limit": 10,
+    "pipeline": []
+  },
+  "visualization": {
+    "type": "kpi" | "map_highlight" | "comparison_bar" | "ranking_bar" | "line_trend" | "map" | "table" | "kpi_table" | "insight",
+    "title": "string",
+    "metric": "string",
+    "unit": "string"
+  }
+}
+
+MONGODB QUERY RULES:
+
 1. Use ONLY the "rainfall" collection fields listed above.
 2. Generate READ-ONLY MongoDB operations.
 3. Prefer aggregation pipelines for analytical questions.
 4. Do not use insert, update, delete, drop, eval, or JavaScript execution.
-5. Return ONLY valid JSON.
-6. The JSON must have this exact structure:
+5. For aggregate queries, use "operation": "aggregate" and put the pipeline in "pipeline".
+6. For find queries, use "operation": "find" and put the filter in "filter".
+7. Do not include markdown fences or explanations.
+8. When the user asks "highest rainfall", "maximum rainfall", or "which record had the highest rainfall", interpret it as the single record with the maximum value of "Daily Actual", unless the user explicitly asks for total, average, or cumulative rainfall by district/state.
+9. When the user asks "which district had the highest rainfall", return the district associated with the single highest "Daily Actual" record.
+10. When comparing districts, calculate the requested statistics separately for each district.
 
-{
-  "operation": "find" | "aggregate",
-  "filter": {},
-  "projection": {},
-  "sort": {},
-  "limit": 10,
-  "pipeline": []
-}
+VISUALIZATION RULES:
 
-7.For aggregate queries, use "operation": "aggregate" and put the pipeline in "pipeline".
-8.For find queries, use "operation": "find" and put the filter in "filter".
-9.Do not include markdown fences or explanations.
-10. When the user asks "highest rainfall", "maximum rainfall", or "which record had the highest rainfall", interpret it as the single record with the maximum value of "Daily Actual", unless the user explicitly asks for total, average, or cumulative rainfall by district/state.
-11. When the user asks "which district had the highest rainfall", return the district associated with the single highest "Daily Actual" record.
-12. When comparing districts, calculate the requested statistics separately for each district.
+1. Use "map_highlight" when the question asks for:
+   - highest/lowest rainfall in a location
+   - which district/state had the highest or lowest rainfall
+   - a specific geographic location identified by the result
+   - geographic risk or hotspot questions where a map adds useful context
+
+2. Use "comparison_bar" when the user explicitly compares two or more districts/states.
+
+3. Use "ranking_bar" when the user asks for:
+   - top N districts/states
+   - ranking
+   - highest to lowest
+   - lowest to highest
+   - multiple ranked locations
+
+4. Use "line_trend" when the user asks about:
+   - rainfall over time
+   - rainfall trend
+   - change over dates
+   - daily/monthly/yearly progression
+
+5. Use "map" when the user asks about:
+   - rainfall distribution across India
+   - rainfall distribution across states/districts
+   - geographic patterns
+   - regional rainfall patterns
+
+6. Use "kpi_table" when the user asks for a specific record or location and the result contains several useful fields.
+
+7. Use "table" when the user requests multiple records or raw data.
+
+8. Use "kpi" when the result is primarily one important numeric value and geographic visualization is not useful.
+
+9. Use "insight" when the answer is mainly categorical or textual and a chart would not add meaningful information.
+
+10. Prefer a geographic visualization over a simple chart when the question is explicitly about a geographic location and the result identifies a district or state.
+
+IMPORTANT:
+- Do NOT generate React code.
+- Do NOT generate chart code.
+- Do NOT invent visualization types outside the allowed list.
+- The frontend will decide how to render each visualization type.
+- "metric" should normally be "Daily Actual", "Daily Normal", "Daily Departure Per", "Cumulative Actual", or another field from the dataset.
+- "unit" should normally be "mm", "%", or an appropriate simple unit.
+- Keep the visualization title short and human-readable.
 `;
 
   const response = await ai.models.generateContent({
@@ -91,10 +152,21 @@ Rules:
   const text = response.text.trim();
 
   try {
-    return JSON.parse(text);
+    const result = JSON.parse(text);
+
+    // Keep backward compatibility with the existing backend.
+    if (!result.query || !result.query.operation) {
+      throw new Error("Gemini response is missing a MongoDB query.");
+    }
+
+    if (!result.visualization || !result.visualization.type) {
+      throw new Error("Gemini response is missing visualization information.");
+    }
+
+    return result;
   } catch (error) {
     console.error("❌ Gemini returned invalid JSON:");
     console.error(text);
-    throw new Error("Gemini generated an invalid MongoDB query.");
+    throw new Error("Gemini generated an invalid query/visualization response.");
   }
 }

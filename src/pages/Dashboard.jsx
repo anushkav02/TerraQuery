@@ -51,11 +51,7 @@ export default function Dashboard({ onAddHistory, onOpenConfig, onNavigate }) {
     { label: 'Weather forecast guardrail', q: 'Will it rain tomorrow?' }
   ];
 
-  // Auto-run primary demo query on initial page load as required
-  useEffect(() => {
-    executeSearch('Which district had the highest rainfall?');
-  }, []);
-
+  
  const executeSearch = async (questionToRun) => {
   const q = (questionToRun || queryInput).trim();
   if (!q) return;
@@ -93,7 +89,7 @@ export default function Dashboard({ onAddHistory, onOpenConfig, onNavigate }) {
     }
 
     const data = await response.json();
-
+  
     // Step 3: Validation + database execution
     setPipelineState({
       step: 3,
@@ -122,6 +118,7 @@ export default function Dashboard({ onAddHistory, onOpenConfig, onNavigate }) {
       ai: data.ai,
       database: data.database,
       generatedQuery: data.query,
+      visualization: data.visualization,
       validation: data.validation,
 
       // Result information
@@ -149,16 +146,48 @@ export default function Dashboard({ onAddHistory, onOpenConfig, onNavigate }) {
       rowsExamined: data.result?.count || 0,
 
       // Keep existing visualization area from crashing.
-     recommendedViz: records.length > 0 ? 'ranking-bar' : null,
-     chartData: records
-       .filter((record) => typeof record['Daily Actual'] === 'number')
-       .map((record, index) => ({
-         label: record.District || 'Unknown',
-         value: record['Daily Actual'],
-         isHighlight: index === 0
-       })),
+      recommendedViz: records.length > 1 ? 'comparison-bar' : records.length > 0 ? 'ranking-bar' : null,
 
-      vizTitle: 'Daily Rainfall Ranking',
+chartData: records.length > 1
+  ? records.map((record, index) => ({
+      label:
+        record.District ??
+        record.district ??
+        record._id ??
+        record.label ??
+        'Unknown',
+
+      value: Number(
+  record[data.visualization?.metric] ??
+  record.avgDailyActual ??
+  record['Daily Actual'] ??
+  record.value ??
+  0
+),
+
+      isHighlight: index === 0
+    }))
+  : records
+      .filter(
+        (record) =>
+          typeof record['Daily Actual'] === 'number'
+      )
+      .map((record, index) => ({
+        label:
+          record.District ??
+          record.district ??
+          record._id ??
+          'Unknown',
+
+        value: record['Daily Actual'],
+
+        isHighlight: index === 0
+      })),
+
+      vizTitle: data.visualization?.title ||
+  (records.length > 1
+    ? 'Rainfall Comparison'
+    : 'Daily Rainfall Ranking'),
       parameter: 'rainfall',
       activeDistrict: firstRecord.District || 'DURG',
       mapMode: 'rainfall',
@@ -166,7 +195,7 @@ export default function Dashboard({ onAddHistory, onOpenConfig, onNavigate }) {
       // Used by the existing query display section.
       generatedSQL: JSON.stringify(data.query, null, 2)
     };
-
+   
     setQueryResult(result);
 
     if (onAddHistory) {
@@ -593,39 +622,103 @@ export default function Dashboard({ onAddHistory, onOpenConfig, onNavigate }) {
               gap: '24px',
               minHeight: '400px'
             }}>
-              {/* Smart Selected Visualization */}
-              <div>
-                {queryResult.recommendedViz === 'ranking-bar' && (
-                  <BarChart 
-                    data={queryResult.chartData} 
-                    title={queryResult.vizTitle} 
-                    unit={queryResult.parameter === 'temperature' ? '°C' : (queryResult.parameter === 'rainfall' ? 'mm' : '%')}
-                  />
-                )}
-                {queryResult.recommendedViz === 'comparison-bar' && (
-                  <ComparisonChart 
-                    data={queryResult.chartData} 
-                    title={queryResult.vizTitle}
-                    seriesMeta={queryResult.seriesMeta}
-                  />
-                )}
-                {queryResult.recommendedViz === 'line-trend' && (
-                  <LineTrendChart 
-                    data={queryResult.chartData} 
-                    title={queryResult.vizTitle} 
-                  />
-                )}
-                {queryResult.recommendedViz === 'anomaly-diverging' && (
-                  <AnomalyDivergingChart 
-                    data={queryResult.chartData} 
-                    title={queryResult.vizTitle} 
-                  />
-                )}
-              </div>
+             {/* Smart Selected Visualization */}
+<div>
+  {queryResult.visualization?.type === 'map_highlight' && (
+    <div
+      style={{
+        padding: '20px',
+        borderRadius: '14px',
+        background: 'rgba(15, 23, 42, 0.65)',
+        border: '1px solid rgba(34, 211, 238, 0.2)',
+        color: '#e2e8f0'
+      }}
+    >
+      <div
+        style={{
+          fontSize: '11px',
+          fontWeight: '700',
+          letterSpacing: '1px',
+          color: '#67e8f9',
+          marginBottom: '8px'
+        }}
+      >
+        CLIMATE HIGHLIGHT
+      </div>
+
+      <h3 style={{ margin: '0 0 12px' }}>
+        {queryResult.visualization.title}
+      </h3>
+
+      {queryResult.kpi && (
+        <>
+          <div
+            style={{
+              fontSize: '32px',
+              fontWeight: '700',
+              marginBottom: '4px'
+            }}
+          >
+            {queryResult.kpi.value}
+          </div>
+
+          <div
+            style={{
+              fontSize: '15px',
+              color: '#cbd5e1'
+            }}
+          >
+            {queryResult.kpi.district}
+          </div>
+
+          <div
+            style={{
+              fontSize: '12px',
+              color: '#94a3b8',
+              marginTop: '4px'
+            }}
+          >
+            {queryResult.kpi.sublabel}
+          </div>
+        </>
+      )}
+    </div>
+  )}
+
+  {queryResult.visualization?.type === 'ranking_bar' && (
+    <BarChart 
+      data={queryResult.chartData} 
+      title={queryResult.vizTitle} 
+      unit={queryResult.visualization.unit || 'mm'}
+    />
+  )}
+
+  {queryResult.visualization?.type === 'comparison_bar' && (
+    <ComparisonChart 
+      data={queryResult.chartData} 
+      title={queryResult.vizTitle}
+      seriesMeta={queryResult.seriesMeta}
+    />
+  )}
+
+  {queryResult.visualization?.type === 'line_trend' && (
+    <LineTrendChart 
+      data={queryResult.chartData} 
+      title={queryResult.vizTitle} 
+    />
+  )}
+
+  {queryResult.visualization?.type === 'anomaly_diverging' && (
+    <AnomalyDivergingChart 
+      data={queryResult.chartData} 
+      title={queryResult.vizTitle} 
+    />
+  )}
+</div>
 
               {/* Geographic Climate Cartogram Map */}
               <div>
-                <ClimateMap 
+                <ClimateMap  highlightDistrict={queryResult?.records?.[0]?.District || null}
                   activeDistrict={queryResult.activeDistrict || 'Durg'}
                   mapMode={queryResult.mapMode || 'temperature'}
                   onSelectDistrict={handleDistrictMapSelect}
