@@ -158,3 +158,29 @@ export async function getDistrictRainfallMapData() {
     }
   ]).toArray();
 }
+export async function getStateRainfallMapData() {
+  const collection = await getCollection();
+
+  return await collection.aggregate([
+    {
+      $group: {
+        _id: "$State",
+        maxRainfall: { $max: "$Daily Actual" },
+        avgRainfall: { $avg: "$Daily Actual" },
+        totalRainfall: { $sum: "$Daily Actual" }
+      }
+    },
+    {
+      $sort: { maxRainfall: -1 }
+    },
+    {
+      $project: {
+        _id: 0,
+        state: "$_id",
+        maxRainfall: 1,
+        avgRainfall: 1,
+        totalRainfall: 1
+      }
+    }
+  ]).toArray();
+}
