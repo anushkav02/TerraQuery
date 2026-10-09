@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar.jsx';
-import OracleConfigModal from './components/OracleConfigModal.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import ExploreData from './pages/ExploreData.jsx';
 import Analytics from './pages/Analytics.jsx';
@@ -29,7 +28,6 @@ export default function App() {
   };
 
   const [activeRoute, setActiveRoute] = useState(getRouteFromPath());
-  const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
   const [historyItems, setHistoryItems] = useState(() => {
     try {
       const saved = localStorage.getItem('terraquery_history');
@@ -122,11 +120,7 @@ export default function App() {
         )}
       </main>
 
-      {/* Global Oracle Configuration & Security Modal */}
-      <OracleConfigModal
-        isOpen={isConfigModalOpen}
-        onClose={() => setIsConfigModalOpen(false)}
-      />
+     
 
       {/* Global Footer */}
       <footer style={{
@@ -159,7 +153,7 @@ export default function App() {
                 </span>
               </div>
               <p style={{ fontSize: '0.82rem', lineHeight: 1.6, color: 'var(--text-muted)' }}>
-                AI-Powered Natural-Language Climate Intelligence Platform. Grounded on Oracle AI Database 26ai, Select AI, and high-fidelity Earth observation datasets.
+               AI-Powered Natural-Language Climate Intelligence Platform. Grounded on real IMD rainfall data using Gemini and MongoDB Atlas.
               </p>
             </div>
 
@@ -210,7 +204,7 @@ export default function App() {
                 Enterprise Architecture
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                <div>• Platform: Oracle AI Database 26ai</div>
+                <div>• Platform: MongoDB Atlas + Google Gemini</div>
                 <div>• Query Layer: Select AI (DBMS_CLOUD_AI)</div>
                 <div>• Catalog: CLIMATE_INTEL_2026.CLIMATE_DATA</div>
                 <div>• Security: Read-Only Role Enforcement</div>
@@ -251,11 +245,11 @@ export default function App() {
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span className="led-indicator led-cyan" />
-              <span>Prototype Mode — Oracle connection simulated with structured 125,000+ observation schema</span>
+              <span>LIVE MODE — Gemini + MongoDB Atlas with real IMD rainfall data</span>
             </div>
 
             <div>
-              Built for Oracle AI Database 26ai Hackathon • No SQL. Just Ask.
+             Ask the climate. Get the evidence.
             </div>
           </div>
         </div>

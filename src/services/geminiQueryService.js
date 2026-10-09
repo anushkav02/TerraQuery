@@ -170,3 +170,38 @@ IMPORTANT:
     throw new Error("Gemini generated an invalid query/visualization response.");
   }
 }
+export async function generateResultExplanation(question, results) {
+  const prompt = `
+You are the result explanation assistant for TerraQuery, a rainfall analytics system.
+
+The system has already executed a validated read-only MongoDB query on the real IMD rainfall dataset.
+
+User question:
+"${question}"
+
+MongoDB results:
+${JSON.stringify(results, null, 2)}
+
+Your job:
+Explain the result clearly and concisely for a user.
+
+Rules:
+1. Use ONLY the information contained in the MongoDB results.
+2. Do NOT invent, estimate, or assume any values.
+3. Directly answer the user's question.
+4. Mention the most important location, value, date, or comparison when available.
+5. If multiple records are returned, summarize the important pattern rather than listing everything.
+6. Keep the explanation to 2-3 sentences.
+7. Do not mention MongoDB, Gemini, prompts, or internal implementation details.
+8. If no records were found, clearly say that no matching rainfall records were found.
+9. Return ONLY the explanation text. Do not return JSON or markdown.
+
+`;
+
+  const response = await ai.models.generateContent({
+    model: "gemini-3.5-flash-lite",
+    contents: prompt,
+  });
+
+  return response.text.trim();
+}
