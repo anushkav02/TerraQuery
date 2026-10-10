@@ -143,9 +143,11 @@ export default function Dashboard({ onAddHistory, onOpenConfig, onNavigate }) {
     }
   : null,
 
-      explanation: records.length
-        ? `The query returned ${records.length} record${records.length === 1 ? '' : 's'} from the real IMD rainfall dataset stored in MongoDB Atlas.`
-        : 'No matching rainfall records were found.',
+          explanation: data.explanation || (
+  records.length
+    ? `The query returned ${records.length} record${records.length === 1 ? '' : 's'} from the real IMD rainfall dataset stored in MongoDB Atlas.`
+    : 'No matching rainfall records were found.'
+),
 
       connectionModeText: 'LIVE GEMINI + MONGODB ATLAS',
       executionTimeMs: null,

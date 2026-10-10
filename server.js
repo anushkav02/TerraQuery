@@ -20,7 +20,10 @@ import {
 
 } from './src/services/mongoQueryService.js';
 
-import { generateMongoQuery } from './src/services/geminiQueryService.js';
+import {
+  generateMongoQuery,
+  generateResultExplanation
+} from './src/services/geminiQueryService.js';
 import { validateMongoQuery } from './src/services/queryValidator.js';
 
 const PORT = process.env.PORT || 5000;
@@ -236,10 +239,19 @@ const server = http.createServer(async (req, res) => {
       console.log('☁️ Executing query on MongoDB Atlas...');
 
       const results = await executeGeneratedQuery(generatedQuery);
-
-      console.log('✅ MongoDB query executed');
+       console.log('✅ MongoDB query executed');
       console.log('📊 Result count:', results.length);
       console.log('📊 First MongoDB record:', results[0]);
+      console.log('🧠 Generating result explanation with Gemini...');
+
+      const explanation = await generateResultExplanation(
+      question,
+      results
+    );
+
+console.log('✅ Result explanation generated');
+console.log(explanation);
+     
 
       console.log('==============================================\n');
 
@@ -274,7 +286,7 @@ const server = http.createServer(async (req, res) => {
           count: results.length,
           records: results
         },
-
+        explanation,
         timestamp: new Date().toISOString()
       });
     }
