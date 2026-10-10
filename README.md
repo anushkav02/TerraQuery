@@ -110,27 +110,4 @@ When backend services are offline or credentials are not configured, TerraQuery 
 
 ---
 
-## 🎙️ 2-Minute Jury Demo Script
 
-1. **0:00 - 0:20 (The Problem & Value Prop):**
-   - Open `http://localhost:3000`. Point out hero headline: *"Ask Earth Data Anything. Turn natural-language questions into trusted climate insights — without writing database queries."*
-   - Note the status indicator: Displays real-time connection status (Connected Live or Standby Mode).
-2. **0:20 - 0:50 (Live Query & Processing Steps):**
-   - Click suggested chip: *"Which district in Chhattisgarh had the highest rainfall in 2024?"*
-   - Click **"Ask TerraQuery"**. Watch the animated 4-step pipeline: *Understanding question → Generating database query → Querying climate dataset → Analyzing result*.
-   - Point out the Key Result card and metrics.
-3. **0:50 - 1:10 (Query Transparency & Lineage):**
-   - Highlight the **AI-generated Query** box executing against MongoDB Atlas.
-   - Click **"Explain Query"** modal to demonstrate the 5-step lineage audit: *User Question → AI Interpretation → Generated MongoDB Query → Database Result → Grounded Explanation*.
-4. **1:10 - 1:30 (Visualization & Climate Map):**
-   - Scroll down to the Bar Chart and interactive Climate Visualizer.
-   - Observe real-time data binding and responsive charts.
-5. **1:30 - 1:45 (Multi-Year Comparison):**
-   - Ask: *"Compare rainfall between Durg and Raipur from 2020 to 2024."*
-   - Show automatic switch to the dual-series comparison chart.
-6. **1:45 - 2:00 (Architecture & Zero Hallucination):**
-   - Click **Architecture** in top nav.
-   - Walk through the pipeline: React + Vite → Google Gemini → Query Validation → MongoDB Atlas.
-   - Conclude with the core differentiator: *"The LLM never invents climate numbers; all values are mathematically grounded in verified database records. No query code needed. Just ask."*
-
----
