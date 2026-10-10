@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Globe2, 
   Database, 
@@ -17,6 +17,26 @@ import {
 
 export default function Navbar({ activeRoute, onNavigate, onOpenConfig }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [backendStatus, setBackendStatus] = useState('checking');
+
+  useEffect(() => {
+    let isMounted = true;
+    fetch('/api/health')
+      .then(res => res.json())
+      .then(data => {
+        if (isMounted) {
+          if (data?.status === 'healthy') {
+            setBackendStatus('connected');
+          } else {
+            setBackendStatus('standby');
+          }
+        }
+      })
+      .catch(() => {
+        if (isMounted) setBackendStatus('standby');
+      });
+    return () => { isMounted = false; };
+  }, []);
 
   const navLinks = [
     { id: 'dashboard', label: 'Dashboard', icon: Sparkles },
@@ -90,7 +110,7 @@ export default function Navbar({ activeRoute, onNavigate, onOpenConfig }) {
                 TERRAQUERY
               </span>
               <span className="pill pill-cyan" style={{ fontSize: '0.65rem', padding: '2px 8px' }}>
-                SELECT AI
+                GEMINI + ATLAS
               </span>
             </div>
             <p style={{
@@ -101,7 +121,7 @@ export default function Navbar({ activeRoute, onNavigate, onOpenConfig }) {
               alignItems: 'center',
               gap: '4px'
             }}>
-              <span>Oracle AI Database 26ai</span>
+              <span>Google Gemini • MongoDB Atlas</span>
               <span style={{ color: 'var(--accent-cyan)' }}>•</span>
               <span>Natural-Language Earth Data</span>
             </p>
@@ -159,7 +179,7 @@ export default function Navbar({ activeRoute, onNavigate, onOpenConfig }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <button
             onClick={onOpenConfig}
-            title="Click to view Oracle AI Database connection parameters"
+            title="Click to view database & AI connection status"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -184,13 +204,13 @@ export default function Navbar({ activeRoute, onNavigate, onOpenConfig }) {
               e.currentTarget.style.boxShadow = '0 0 15px rgba(0, 242, 254, 0.1)';
             }}
           >
-            <span className="led-indicator led-cyan" />
+            <span className={`led-indicator ${backendStatus === 'connected' ? 'led-cyan' : 'led-amber'}`} />
             <div style={{ textAlign: 'left', lineHeight: 1.2 }}>
               <div style={{ color: 'var(--text-primary)', fontSize: '0.74rem' }}>
-                Oracle AI Database 26ai
+                MongoDB Atlas + Gemini
               </div>
-              <div style={{ color: 'var(--accent-cyan)', fontSize: '0.68rem', fontWeight: 500 }}>
-                Prototype Mode (Simulated)
+              <div style={{ color: backendStatus === 'connected' ? 'var(--accent-cyan)' : '#F59E0B', fontSize: '0.68rem', fontWeight: 500 }}>
+                {backendStatus === 'connected' ? 'Connected (Live)' : 'Standby (Local Dataset)'}
               </div>
             </div>
             <Server size={14} color="#38BDF8" style={{ marginLeft: '4px' }} />

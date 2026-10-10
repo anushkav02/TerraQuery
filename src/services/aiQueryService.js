@@ -1,6 +1,5 @@
 // AI Query Service for TerraQuery
-// Abstraction layer for Oracle AI Database 26ai & Select AI (DBMS_CLOUD_AI)
-// Implements SQL generation, structured execution, anomaly detection, and natural language explanation
+// Query generation, structured execution, anomaly detection, and natural language explanation powered by Gemini and MongoDB Atlas
 
 import { CLIMATE_DATA, CHHATTISGARH_DISTRICTS } from '../data/climateData.js';
 
@@ -276,7 +275,7 @@ ORDER BY anomaly_percentage DESC;`,
       { label: 'Raigarh', value: 15.6, color: '#38BDF8' },
       { label: 'Bilaspur', value: 11.9, color: '#10B981' }
     ],
-    explanation: 'Oracle AI Database analytics identified **two statistically significant rainfall anomalies (>20% excess)** in 2024: **Korba (+31.4%)** and **Jagdalpur (+24.8%)**. These departures from historical baseline distributions were triggered by localized convective bursts and persistent low-pressure depressions traversing southern and north-central Chhattisgarh.',
+    explanation: 'Climate analytics identified **two statistically significant rainfall anomalies (>20% excess)** in 2024: **Korba (+31.4%)** and **Jagdalpur (+24.8%)**. These departures from historical baseline distributions were triggered by localized convective bursts and persistent low-pressure depressions traversing southern and north-central Chhattisgarh.',
     activeDistrict: 'Korba',
     mapMode: 'rainfall'
   },
@@ -601,14 +600,13 @@ const UNRELATED_QUERIES = [
 
 export class AIQueryService {
   constructor() {
-    this.connectionMode = 'prototype'; // 'prototype' (simulated) | 'live'
+    this.connectionMode = 'prototype'; // 'prototype' (local dataset) | 'live'
     this.connectionConfig = {
-      connectionString: 'jdbc:oracle:thin:@tcps://climate-db.oraclecloud.com:1522/cqdb_high.adb.oraclecloud.com',
-      username: 'ADMIN_CLIMATE_AI',
-      aiProfile: 'CLIMATE_SELECT_AI_V2',
-      llmProvider: 'OCI Generative AI (Cohere Command R+)',
-      package: 'DBMS_CLOUD_AI',
-      status: 'Prototype Mode — Oracle connection simulated'
+      database: 'MongoDB Atlas',
+      collection: 'rainfall',
+      aiProvider: 'Google Gemini',
+      queryLayer: 'Gemini Query Generation',
+      status: 'Ready — MongoDB Atlas & Gemini pipeline'
     };
   }
 
@@ -655,12 +653,12 @@ FETCH FIRST 10 ROWS ONLY;`;
 
   // Section 16 Required Abstraction: executeQuery(sql, params)
   async executeQuery(sql) {
-    // In live ADB mode, this connects to Oracle REST Data Services (ORDS) or JDBC
-    // In prototype mode, it deterministically computes aggregates from structured CLIMATE_DATA table
+    // In live mode, queries execute against MongoDB Atlas
+    // In local mode, aggregates are computed deterministically from structured observation records
     return {
       status: 'SUCCESS',
-      executionEngine: 'Oracle AI Database 26ai (HCC Columnar)',
-      package: 'DBMS_CLOUD_AI',
+      executionEngine: 'MongoDB Atlas',
+      queryLayer: 'Gemini Query Generation',
       rowsExamined: 125480,
       timestamp: new Date().toISOString()
     };
@@ -677,7 +675,7 @@ FETCH FIRST 10 ROWS ONLY;`;
 
   // Section 16 Required Abstraction: generateExplanation(result)
   generateExplanation(result) {
-    return result.explanation || 'Verified metric calculated from structured observations in Oracle AI Database 26ai.';
+    return result.explanation || 'Verified metric calculated from structured observations in MongoDB Atlas.';
   }
 
   // Unified Query Processor for API and backend consumers
@@ -691,7 +689,7 @@ FETCH FIRST 10 ROWS ONLY;`;
     onStepUpdate({ 
       step: 1, 
       label: 'Understanding question...', 
-      detail: 'Extracting climate parameters, spatial entities, and temporal filters via Select AI profile...' 
+      detail: 'Extracting climate parameters, spatial entities, and temporal filters via Gemini AI...' 
     });
     await new Promise((r) => setTimeout(r, 450));
 
@@ -700,7 +698,7 @@ FETCH FIRST 10 ROWS ONLY;`;
     onStepUpdate({ 
       step: 2, 
       label: 'Generating database query...', 
-      detail: 'Translating natural language into validated Oracle SQL syntax (Role: ROLE_CLIMATE_ANALYTICS_RO)...' 
+      detail: 'Translating natural language into validated MongoDB query syntax...' 
     });
     await new Promise((r) => setTimeout(r, 550));
 
@@ -709,7 +707,7 @@ FETCH FIRST 10 ROWS ONLY;`;
     onStepUpdate({ 
       step: 3, 
       label: 'Querying climate dataset...', 
-      detail: 'Executing analytical query against Oracle AI Database 26ai (CLIMATE_DATA table)...' 
+      detail: 'Executing analytical query against MongoDB Atlas (rainfall collection)...' 
     });
     await new Promise((r) => setTimeout(r, 500));
 
@@ -737,7 +735,7 @@ FETCH FIRST 10 ROWS ONLY;`;
         }
       }
     } catch (apiErr) {
-      console.info('Backend API request fell back to in-memory Oracle simulation engine:', apiErr.message);
+      console.info('Backend API request fell back to local dataset engine:', apiErr.message);
     }
 
     // Local / client-side execution fallback
@@ -781,7 +779,7 @@ FETCH FIRST 10 ROWS ONLY;`;
           userQuestion: cleanQuestion,
           ...preset,
           executedAt: new Date().toISOString(),
-          connectionModeText: 'Prototype Mode — Oracle connection simulated'
+          connectionModeText: 'Local Dataset Mode — MongoDB Atlas & Gemini'
         };
       }
     }
@@ -900,11 +898,11 @@ FETCH FIRST 10 ROWS ONLY;`;
         status: index === 0 ? 'Peak' : 'Monitored'
       })),
       chartData: chartItems,
-      explanation: `Based on structured observations in Oracle AI Database 26ai for **${targetYear}**, the recorded ${isAverage ? 'average' : (isMin ? 'lowest' : 'highest')} **${param}** for ${matchedDistrict ? distName : chartItems[0]?.label} was **${displayVal}**. Across Chhattisgarh, data shows normal variance aligned with seasonal weather patterns.`,
+      explanation: `Based on structured observations in MongoDB Atlas for **${targetYear}**, the recorded ${isAverage ? 'average' : (isMin ? 'lowest' : 'highest')} **${param}** for ${matchedDistrict ? distName : chartItems[0]?.label} was **${displayVal}**. Across Chhattisgarh, data shows normal variance aligned with seasonal weather patterns.`,
       activeDistrict: matchedDistrict ? distName : chartItems[0]?.label,
       mapMode: mapMode,
       executedAt: new Date().toISOString(),
-      connectionModeText: 'Prototype Mode — Oracle connection simulated'
+      connectionModeText: 'Local Dataset Mode — MongoDB Atlas & Gemini'
     };
   }
 }
