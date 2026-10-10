@@ -15,7 +15,9 @@ import {
 import {
   executeGeneratedQuery,
   getDistrictRainfallMapData,
-  getStateRainfallMapData
+  getStateRainfallMapData,
+  getRecordsByDistrict
+
 } from './src/services/mongoQueryService.js';
 
 import { generateMongoQuery } from './src/services/geminiQueryService.js';
@@ -237,6 +239,7 @@ const server = http.createServer(async (req, res) => {
 
       console.log('✅ MongoDB query executed');
       console.log('📊 Result count:', results.length);
+      console.log('📊 First MongoDB record:', results[0]);
 
       console.log('==============================================\n');
 
@@ -321,6 +324,44 @@ const server = http.createServer(async (req, res) => {
       error: error.message
     });
 
+  }
+}
+// =====================================================
+// DISTRICT DRILL-DOWN API
+// =====================================================
+if (
+  req.method === 'GET' &&
+  pathname.startsWith('/api/district/')
+) {
+  try {
+    const district = decodeURIComponent(
+      pathname.slice('/api/district/'.length)
+    ).trim();
+
+    if (!district) {
+      return sendJSON(res, 400, {
+        success: false,
+        error: 'District name is required.'
+      });
+    }
+
+    console.log(`[District drill-down] ${district}`);
+
+    const records = await getRecordsByDistrict(district);
+
+    return sendJSON(res, 200, {
+      success: true,
+      district: district.toUpperCase(),
+      count: records.length,
+      records
+    });
+  } catch (error) {
+    console.error('District drill-down error:', error);
+
+    return sendJSON(res, 500, {
+      success: false,
+      error: error.message
+    });
   }
 }
     // =====================================================
