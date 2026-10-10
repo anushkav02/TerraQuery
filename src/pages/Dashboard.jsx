@@ -36,6 +36,12 @@ export default function Dashboard({ onAddHistory, onOpenConfig, onNavigate }) {
   const [queryResult, setQueryResult] = useState(null);
   const [explainModalOpen, setExplainModalOpen] = useState(false);
   const [copiedSql, setCopiedSql] = useState(false);
+  const [districtDrilldown, setDistrictDrilldown] = useState({
+    district: '',
+    loading: false,
+    error: '',
+    records: []
+  });
 
   // Suggested queries chips from prompt requirements
   const SUGGESTED_CHIPS = [
@@ -128,14 +134,14 @@ export default function Dashboard({ onAddHistory, onOpenConfig, onNavigate }) {
 
       // Dashboard display
       kpi: firstRecord['Daily Actual'] !== undefined
-        ? {
-            value: `${firstRecord['Daily Actual']} mm`,
-            label: 'Highest Daily Rainfall',
-            district: firstRecord.District,
-            year: firstRecord.Date?.slice(0, 4),
-            sublabel: `${firstRecord.State || ''} • ${firstRecord.Date || ''}`
-          }
-        : null,
+  ? {
+      value: `${Number(firstRecord['Daily Actual'])} mm`,
+      label: 'Highest Daily Rainfall',
+      district: firstRecord.District,
+      year: firstRecord.Date?.slice(0, 4),
+      sublabel: `${firstRecord.State || ''} • ${firstRecord.Date || ''}`
+    }
+  : null,
 
           explanation: data.explanation || (
   records.length
@@ -225,9 +231,56 @@ chartData: records.length > 1
     setCopiedSql(true);
     setTimeout(() => setCopiedSql(false), 2000);
   };
+  // Fetch district observations directly from the district drill-down API.
+  const handleDistrictMapSelect = async (districtName) => {
+    if (!districtName) return;
 
-  const handleDistrictMapSelect = (districtName) => {
-    executeSearch(`Show the temperature and climate metrics for ${districtName} in 2024`);
+    setDistrictDrilldown({
+      district: districtName,
+      loading: true,
+      error: '',
+      records: []
+    });
+
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/district/${encodeURIComponent(districtName)}`
+      );
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || data.message || 'Unable to load district rainfall details.');
+      }
+
+      setDistrictDrilldown({
+        district: data.district || districtName,
+        loading: false,
+        error: '',
+        records: Array.isArray(data.records) ? data.records : []
+      });
+    } catch (error) {
+      console.error('District drill-down error:', error);
+      setDistrictDrilldown({
+        district: districtName,
+        loading: false,
+        error: error.message || 'Unable to load district rainfall details.',
+        records: []
+      });
+    }
+  };
+
+  // Dataset headers sometimes contain spaces or line breaks, so normalize them.
+  const getDistrictField = (record, fieldName) => {
+    const normalize = (value) => String(value).replace(/\s+/g, '').toLowerCase();
+    const wanted = normalize(fieldName);
+    const key = Object.keys(record || {}).find((item) => normalize(item) === wanted);
+    return key === undefined ? undefined : record[key];
+  };
+
+  const formatDistrictValue = (value, suffix = '') => {
+    if (value === undefined || value === null || value === '') return '—';
+    const number = Number(value);
+    return Number.isFinite(number) ? `${number}${suffix}` : `${value}${suffix}`;
   };
 
   return (
@@ -728,6 +781,165 @@ chartData: records.length > 1
               </div>
             </div>
 
+            {/* District drill-down: fetched directly from MongoDB through /api/district/:district */}
+            {districtDrilldown.district && (
+              <section
+                className="glass-card"
+                style={{
+                  padding: '24px',
+                  border: '1px solid rgba(34, 211, 238, 0.28)',
+                  background: 'rgba(8, 18, 36, 0.88)'
+                }}
+              >
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                  gap: '16px',
+                  flexWrap: 'wrap',
+                  marginBottom: '18px'
+                }}>
+                  <div>
+                    <span className="pill pill-cyan" style={{ fontSize: '0.68rem' }}>
+                      DISTRICT DRILL-DOWN
+                    </span>
+                    <h3 style={{ margin: '10px 0 5px', fontSize: '1.35rem' }}>
+                      {districtDrilldown.district} Rainfall Details
+                    </h3>
+                    <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                      Daily, weekly, monthly and cumulative IMD observations from MongoDB Atlas.
+                    </p>
+                  </div>
+                  <button
+                    className="btn btn-outline"
+                    onClick={() => setDistrictDrilldown({
+                      district: '',
+                      loading: false,
+                      error: '',
+                      records: []
+                    })}
+                    style={{ fontSize: '0.8rem' }}
+                  >
+                    Close details
+                  </button>
+                </div>
+
+                {districtDrilldown.loading && (
+                  <p style={{ color: 'var(--accent-cyan)' }}>Loading district observations from MongoDB Atlas…</p>
+                )}
+
+                {!districtDrilldown.loading && districtDrilldown.error && (
+                  <div style={{
+                    padding: '14px',
+                    borderRadius: '10px',
+                    color: '#FCA5A5',
+                    background: 'rgba(127, 29, 29, 0.18)',
+                    border: '1px solid rgba(248, 113, 113, 0.25)'
+                  }}>
+                    {districtDrilldown.error}
+                    <p style={{ margin: '8px 0 0', color: 'var(--text-secondary)', fontSize: '0.82rem' }}>
+                      Check that the backend is running and that the district API route is registered before the 404 handler.
+                    </p>
+                  </div>
+                )}
+
+                {!districtDrilldown.loading && !districtDrilldown.error && districtDrilldown.records.length === 0 && (
+                  <p style={{ color: 'var(--text-secondary)' }}>No rainfall records were found for this district.</p>
+                )}
+
+                {!districtDrilldown.loading && !districtDrilldown.error && districtDrilldown.records.length > 0 && (() => {
+                  const records = districtDrilldown.records;
+                  const latest = records[records.length - 1];
+                  const actualValues = records
+                    .map((record) => Number(getDistrictField(record, 'Daily Actual')))
+                    .filter(Number.isFinite);
+                  const average = actualValues.length
+                    ? actualValues.reduce((sum, value) => sum + value, 0) / actualValues.length
+                    : null;
+                  const latestDate = getDistrictField(latest, 'Date') || '—';
+                  const latestActual = getDistrictField(latest, 'Daily Actual');
+                  const latestNormal = getDistrictField(latest, 'Daily Normal');
+                  const latestDeparture = getDistrictField(latest, 'Daily Departure Per');
+                  const visibleRecords = [...records].slice(-10).reverse();
+                  const columns = [
+                    ['Date', 'Date', ''],
+                    ['Daily Actual', 'Daily Actual', ' mm'],
+                    ['Daily Normal', 'Daily Normal', ' mm'],
+                    ['Daily Departure %', 'Daily Departure Per', '%'],
+                    ['Category', 'Daily Category', ''],
+                    ['Weekly Actual', 'Weekly Actual', ' mm'],
+                    ['Monthly Actual', 'Monthly Actual', ' mm'],
+                    ['Cumulative Actual', 'Cumulative Actual', ' mm']
+                  ];
+
+                  return (
+                    <>
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+                        gap: '12px',
+                        marginBottom: '20px'
+                      }}>
+                        {[
+                          { label: 'Records Found', value: records.length },
+                          { label: 'Latest Observation', value: latestDate },
+                          { label: 'Latest Daily Rainfall', value: formatDistrictValue(latestActual, ' mm') },
+                          { label: 'Latest Normal Rainfall', value: formatDistrictValue(latestNormal, ' mm') },
+                          { label: 'Latest Departure', value: formatDistrictValue(latestDeparture, '%') },
+                          { label: 'Average Daily Rainfall', value: average === null ? '—' : `${average.toFixed(2)} mm` }
+                        ].map((item) => (
+                          <div key={item.label} style={{
+                            padding: '14px',
+                            borderRadius: '10px',
+                            background: 'rgba(15, 23, 42, 0.75)',
+                            border: '1px solid var(--border-subtle)'
+                          }}>
+                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: '8px' }}>
+                              {item.label}
+                            </div>
+                            <div style={{ fontSize: '1.05rem', fontWeight: 700, color: '#E2E8F0', overflowWrap: 'anywhere' }}>
+                              {item.value}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div style={{ marginBottom: '10px', color: 'var(--text-secondary)', fontSize: '0.82rem' }}>
+                        Showing the latest {visibleRecords.length} observations (newest first).
+                      </div>
+                      <div style={{ overflowX: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '850px', fontSize: '0.82rem' }}>
+                          <thead>
+                            <tr style={{
+                              textAlign: 'left',
+                              color: 'var(--text-secondary)',
+                              borderBottom: '1px solid var(--border-subtle)'
+                            }}>
+                              {columns.map(([label]) => (
+                                <th key={label} style={{ padding: '11px 12px', whiteSpace: 'nowrap' }}>{label}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {visibleRecords.map((record, index) => (
+                              <tr key={record._id ?? record.id ?? `${getDistrictField(record, 'Date')}-${index}`}
+                                style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                {columns.map(([label, field, suffix]) => (
+                                  <td key={label} style={{ padding: '11px 12px', color: '#CBD5E1', whiteSpace: 'nowrap' }}>
+                                    {formatDistrictValue(getDistrictField(record, field), suffix)}
+                                  </td>
+                                ))}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </>
+                  );
+                })()}
+              </section>
+            )}
+
             {/* Supporting Data Table */}
             {queryResult.tableData && queryResult.tableData.length > 0 && (
               <div className="glass-card" style={{ padding: '24px' }}>
@@ -885,3 +1097,4 @@ chartData: records.length > 1
     </div>
   );
 }
+
