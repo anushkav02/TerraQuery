@@ -24,7 +24,7 @@ export default function About({ onNavigateToDashboard }) {
             <Award size={13} /> HACKATHON PROTOTYPE SPECIFICATION
           </span>
           <span className="pill pill-emerald" style={{ fontSize: '0.74rem' }}>
-            ORACLE AI DATABASE 26ai
+            GEMINI + MONGODB ATLAS
           </span>
         </div>
 
@@ -40,7 +40,7 @@ export default function About({ onNavigateToDashboard }) {
         </h1>
 
         <p style={{ fontSize: '1.1rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-          "An AI-powered natural-language interface over structured Earth and climate observations, powered by Oracle AI Database 26ai and Select AI."
+          "An AI-powered natural-language interface over structured Earth and climate observations, powered by Google Gemini and MongoDB Atlas."
         </p>
       </div>
 
@@ -67,7 +67,7 @@ export default function About({ onNavigateToDashboard }) {
               Climate science and disaster relief depend on high-velocity data queries across millions of sensor readings. Yet the people who make critical policies — climate analysts, emergency response officers, agricultural directors — rarely know SQL.
             </p>
             <p style={{ fontSize: '0.9rem', color: '#E2E8F0', marginTop: '10px', lineHeight: 1.6 }}>
-              TerraQuery bridges this gap: users ask questions in plain English, and Oracle Database 26ai's native <strong>Select AI</strong> layer handles the query translation, execution, anomaly discovery, and visual mapping seamlessly.
+              TerraQuery bridges this gap: users ask questions in plain English, and Google Gemini with MongoDB Atlas handles the query translation, execution, anomaly discovery, and visual mapping seamlessly.
             </p>
           </div>
 
@@ -83,9 +83,9 @@ export default function About({ onNavigateToDashboard }) {
           }}>
             <div style={{ color: 'var(--text-muted)', marginBottom: '8px' }}>// Natural Query Flow:</div>
             <div>User: "Compare rainfall between Durg & Raipur"</div>
-            <div style={{ color: 'var(--accent-emerald)' }}>↓ Select AI (DBMS_CLOUD_AI)</div>
-            <div>Oracle SQL: SELECT district, SUM(rainfall)...</div>
-            <div style={{ color: 'var(--accent-emerald)' }}>↓ Oracle AI Database 26ai Engine</div>
+            <div style={{ color: 'var(--accent-emerald)' }}>↓ Gemini AI Query Generation</div>
+            <div>MongoDB: db.rainfall.aggregate([...])</div>
+            <div style={{ color: 'var(--accent-emerald)' }}>↓ MongoDB Atlas Engine</div>
             <div>Result: Raipur +165 mm surplus (+14.0%)</div>
             <div style={{ color: 'var(--accent-cyan)' }}>↓ Grounded Visuals & Anomaly Map</div>
           </div>
@@ -172,7 +172,7 @@ export default function About({ onNavigateToDashboard }) {
             },
             {
               step: 'Step 4: Architecture & Trust (1:25 - 2:00)',
-              text: 'Open the Architecture page. Show Oracle Database 26ai + Select AI. Emphasize: "The LLM never hallucinates numbers — data is computed directly in Oracle 26ai."'
+              text: 'Open the Architecture page. Show Google Gemini + MongoDB Atlas. Emphasize: "The LLM never hallucinates numbers — data is computed directly from MongoDB Atlas."'
             }
           ].map((item, idx) => (
             <div key={idx} style={{
@@ -217,14 +217,14 @@ export default function About({ onNavigateToDashboard }) {
           {[
             {
               title: '1. No SQL Expertise Required',
-              desc: 'Natural language queries are automatically translated to optimized Oracle SQL.'
+              desc: 'Natural language queries are automatically translated to validated, read-only MongoDB queries.'
             },
             {
               title: '2. Deterministic Database Grounding',
-              desc: 'Answers are backed by structured observation tables in Oracle 26ai, eliminating LLM hallucinations.'
+              desc: 'Answers are backed by structured observation collections in MongoDB Atlas, eliminating LLM hallucinations.'
             },
             {
-              title: '3. Transparent SQL Inspector',
+              title: '3. Transparent Query Inspector',
               desc: 'Full visibility into generated queries, schema references, and execution plans with 1-click lineage auditing.'
             },
             {

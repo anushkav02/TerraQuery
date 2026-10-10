@@ -77,7 +77,7 @@ export default function AnomalyDivergingChart({ data = [], title }) {
         color: 'var(--text-muted)'
       }}>
         <span>Historical Baseline: 2020–2023 Mean</span>
-        <span>Oracle AI Database 26ai Anomaly Scoring Engine</span>
+        <span>Climate Baseline Anomaly Scoring Engine</span>
       </div>
     </div>
   );

@@ -169,7 +169,7 @@ function generateClimateRecords() {
           wind_speed: windSpeed,
           pressure: pressure,
           is_monsoon: m.season === 'Monsoon',
-          data_source: 'Oracle AI Database 26ai (Schema: CLIMATE_INTEL_2026)'
+          data_source: 'MongoDB Atlas (Collection: rainfall)'
         });
       });
     });
@@ -182,7 +182,7 @@ export const CLIMATE_DATA = generateClimateRecords();
 
 // Aggregation summary statistics for immediate dashboard use
 export const DATASET_METRICS = {
-  totalRecordsIndexed: 125480, // Representative large-scale Oracle table index
+  totalRecordsIndexed: 125480, // Representative rainfall dataset index
   dateRange: '2020-01-01 to 2024-12-31',
   monitoredDistricts: ALL_MONITORED_LOCATIONS.length,
   monitoredStates: AVAILABLE_STATES.length,

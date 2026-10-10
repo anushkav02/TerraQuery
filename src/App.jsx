@@ -6,6 +6,7 @@ import Analytics from './pages/Analytics.jsx';
 import Architecture from './pages/Architecture.jsx';
 import History from './pages/History.jsx';
 import About from './pages/About.jsx';
+import StackConfigModal from './components/StackConfigModal.jsx';
 import { 
   Globe2, 
   Database, 
@@ -28,6 +29,8 @@ export default function App() {
   };
 
   const [activeRoute, setActiveRoute] = useState(getRouteFromPath());
+  const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
+  const [backendStatus, setBackendStatus] = useState('checking');
   const [historyItems, setHistoryItems] = useState(() => {
     try {
       const saved = localStorage.getItem('terraquery_history');
@@ -36,6 +39,26 @@ export default function App() {
       return [];
     }
   });
+
+  // Check backend health for accurate live/standby status indicator
+  useEffect(() => {
+    let isMounted = true;
+    fetch('/api/health')
+      .then(res => res.json())
+      .then(data => {
+        if (isMounted) {
+          if (data?.status === 'healthy') {
+            setBackendStatus('connected');
+          } else {
+            setBackendStatus('standby');
+          }
+        }
+      })
+      .catch(() => {
+        if (isMounted) setBackendStatus('standby');
+      });
+    return () => { isMounted = false; };
+  }, []);
 
   // Sync with browser URL navigation
   useEffect(() => {
@@ -120,7 +143,11 @@ export default function App() {
         )}
       </main>
 
-     
+      {/* Connection & Stack Details Modal */}
+      <StackConfigModal
+        isOpen={isConfigModalOpen}
+        onClose={() => setIsConfigModalOpen(false)}
+      />
 
       {/* Global Footer */}
       <footer style={{
@@ -149,7 +176,7 @@ export default function App() {
                   TERRAQUERY
                 </span>
                 <span className="pill pill-cyan" style={{ fontSize: '0.62rem' }}>
-                  26ai
+                  Atlas + AI
                 </span>
               </div>
               <p style={{ fontSize: '0.82rem', lineHeight: 1.6, color: 'var(--text-muted)' }}>
@@ -192,7 +219,7 @@ export default function App() {
                     onClick={() => navigateTo('architecture')}
                     style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', padding: 0 }}
                   >
-                    System Architecture & Select AI
+                    System Architecture & Query Pipeline
                   </button>
                 </li>
               </ul>
@@ -205,8 +232,8 @@ export default function App() {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
                 <div>• Platform: MongoDB Atlas + Google Gemini</div>
-                <div>• Query Layer: Select AI (DBMS_CLOUD_AI)</div>
-                <div>• Catalog: CLIMATE_INTEL_2026.CLIMATE_DATA</div>
+                <div>• Query Layer: Gemini AI + Validated MongoDB</div>
+                <div>• Dataset: IMD Rainfall Records</div>
                 <div>• Security: Read-Only Role Enforcement</div>
                 <div style={{ marginTop: '4px' }}>
                   <button
@@ -244,8 +271,12 @@ export default function App() {
             color: 'var(--text-muted)'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span className="led-indicator led-cyan" />
-              <span>LIVE MODE — Gemini + MongoDB Atlas with real IMD rainfall data</span>
+              <span className={`led-indicator ${backendStatus === 'connected' ? 'led-cyan' : 'led-amber'}`} />
+              <span>
+                {backendStatus === 'connected'
+                  ? 'LIVE MODE — Gemini + MongoDB Atlas with real IMD rainfall data'
+                  : 'STANDBY MODE — Local IMD rainfall dataset active (Backend Standby)'}
+              </span>
             </div>
 
             <div>

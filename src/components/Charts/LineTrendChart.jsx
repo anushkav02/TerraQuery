@@ -164,7 +164,7 @@ export default function LineTrendChart({ data = [], title }) {
         fontSize: '0.72rem',
         color: 'var(--text-muted)'
       }}>
-        <span>Oracle AI Database 26ai Linear Regressive Smoothing</span>
+        <span>IMD Rainfall Multi-Year Linear Regressive Smoothing</span>
         <span>Confidence Interval: 95%</span>
       </div>
     </div>

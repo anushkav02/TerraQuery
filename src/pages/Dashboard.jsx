@@ -239,7 +239,7 @@ chartData: records.length > 1
         position: 'relative'
       }}>
         <div className="container" style={{ maxWidth: '960px' }}>
-          {/* Oracle Badge */}
+          {/* Stack Badge */}
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
             <span className="pill pill-cyan" style={{ fontSize: '0.72rem', padding: '4px 14px' }}>
               <Sparkles size={12} /> GEMINI + MONGODB ATLAS

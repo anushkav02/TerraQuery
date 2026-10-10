@@ -105,7 +105,7 @@ export default function BarChart({ data = [], title, unit = '', isHorizontal = t
         fontSize: '0.72rem',
         color: 'var(--text-muted)'
       }}>
-        <span>Grounded on Oracle AI Database 26ai CLIMATE_DATA</span>
+        <span>Grounded on MongoDB Atlas IMD Rainfall Data</span>
         <span>Auto-scaled Ranking Bar</span>
       </div>
     </div>

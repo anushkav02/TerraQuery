@@ -102,7 +102,7 @@ export default function History({ historyItems = [], onSelectQuery, onClearHisto
               <HistoryIcon size={13} /> AUDIT & QUERY LOG
             </span>
             <span className="pill pill-muted" style={{ fontSize: '0.72rem' }}>
-              Select AI Session Log
+              Gemini + MongoDB Session Log
             </span>
           </div>
 
@@ -111,7 +111,7 @@ export default function History({ historyItems = [], onSelectQuery, onClearHisto
           </h2>
 
           <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
-            Review past natural-language queries, generated SQL statements, execution metrics, and visualizations. Click any record to re-run.
+            Review past natural-language queries, generated database queries, execution metrics, and visualizations. Click any record to re-run.
           </p>
         </div>
 
@@ -170,7 +170,7 @@ export default function History({ historyItems = [], onSelectQuery, onClearHisto
                   </span>
 
                   <span className={`pill ${item.isGuardrail ? 'pill-amber' : 'pill-emerald'}`} style={{ fontSize: '0.62rem' }}>
-                    {item.isGuardrail ? 'Guardrail Triggered' : 'Executed in 26ai'}
+                    {item.isGuardrail ? 'Guardrail Triggered' : 'Executed in MongoDB'}
                   </span>
 
                   <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -245,7 +245,7 @@ export default function History({ historyItems = [], onSelectQuery, onClearHisto
         alignItems: 'center',
         justifyContent: 'space-between'
       }}>
-        <span>Audit Trail: Session logs retained in browser memory and mapped to Oracle Select AI telemetry.</span>
+        <span>Audit Trail: Session logs retained in browser memory with grounded Gemini & MongoDB telemetry.</span>
         <span>Schema Grounding: Verified</span>
       </div>
     </div>
