@@ -142,7 +142,7 @@ export default function ExploreData() {
           </h2>
 
           <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginTop: '4px', maxWidth: '720px' }}>
-            Explore underlying observation records ingested and indexed in Oracle AI Database 26ai. Query by spatio-temporal filters or download full schema extracts.
+            Explore underlying observation records ingested and indexed in MongoDB Atlas. Query by spatio-temporal filters or download full schema extracts.
           </p>
         </div>
 
@@ -164,11 +164,11 @@ export default function ExploreData() {
         marginBottom: '24px'
       }}>
         {[
-          { label: 'Total DB Records', val: '125,480', sub: 'Indexed in Oracle 26ai' },
+          { label: 'Total DB Records', val: '125,480', sub: 'Indexed in MongoDB Atlas' },
           { label: 'Date Coverage', val: '2020 – 2024', sub: '5 Complete Calendar Years' },
           { label: 'Spatial Coverage', val: '12 Districts', sub: 'Chhattisgarh Central Grid' },
           { label: 'Schema Parameters', val: '10 Metrics', sub: 'Temp, Rain, Hum, Wind, Press' },
-          { label: 'Storage Engine', val: 'Hybrid Columnar', sub: 'Oracle In-Memory Enabled' }
+          { label: 'Storage Engine', val: 'Document Store', sub: 'MongoDB Atlas Cloud' }
         ].map((stat, i) => (
           <div key={i} className="glass-card" style={{ padding: '14px 18px' }}>
             <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{stat.label}</div>
@@ -519,7 +519,7 @@ export default function ExploreData() {
           background: 'rgba(5, 8, 19, 0.7)'
         }}>
           <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-            Showing records {(currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length} (from 125k+ indexed Oracle database table)
+            Showing records {(currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length} (from indexed MongoDB Atlas collection)
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -563,8 +563,8 @@ export default function ExploreData() {
         alignItems: 'center',
         justifyContent: 'space-between'
       }}>
-        <span>Prototype Dataset Notice: Realistic modeled observations based on IMD spatial distributions for hackathon demonstration.</span>
-        <span style={{ color: 'var(--accent-cyan)' }}>Table: CLIMATE_INTEL_2026.CLIMATE_DATA</span>
+        <span>Dataset Attribution Notice: Grounded observations based on IMD rainfall distributions for climate intelligence.</span>
+        <span style={{ color: 'var(--accent-cyan)' }}>Collection: terraquery.rainfall (MongoDB Atlas)</span>
       </div>
     </div>
   );

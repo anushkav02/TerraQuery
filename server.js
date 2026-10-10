@@ -1,10 +1,36 @@
 // TerraQuery API Server
 // Backend for AI-powered natural-language rainfall analytics
 // Gemini → MongoDB query → Validation → MongoDB Atlas → Real IMD results
-
+import 'dotenv/config';
 import http from 'http';
 import { URL } from 'url';
+import { createClient } from 'redis';
+const redisClient = createClient({
+  url: process.env.REDIS_URL,
+  socket: {
+    connectTimeout: 3000,
+    reconnectStrategy: false
+  }
+});
 
+redisClient.on('error', (err) => {
+  console.error('Redis cache error:', err.message);
+});
+
+let redisReady = false;
+
+if (process.env.REDIS_URL) {
+  redisClient.connect()
+    .then(() => {
+      redisReady = true;
+      console.log('✅ Redis cache connected');
+    })
+    .catch((err) => {
+      console.warn('⚠️ Redis unavailable; caching disabled:', err.message);
+    });
+} else {
+  console.log('ℹ️ REDIS_URL not set; caching disabled');
+}
 import {
   CLIMATE_DATA,
   CHHATTISGARH_DISTRICTS,
@@ -144,7 +170,8 @@ const server = http.createServer(async (req, res) => {
           'POST /api/query',
           'GET  /api/dataset',
           'GET  /api/analytics',
-          'GET  /api/oracle-profile'
+          'GET  /api/stack-profile',
+          'GET  /api/oracle-profile (legacy compatibility)'
         ]
       });
     }
@@ -202,6 +229,29 @@ const server = http.createServer(async (req, res) => {
       console.log('\n==============================================');
       console.log('🌧️ TerraQuery AI Query');
       console.log('Question:', question);
+      // Check Redis before calling Gemini or MongoDB
+const normalizedQuestion = question
+  .toLowerCase()
+  .replace(/[^\w\s]/g, '')
+  .replace(/\s+/g, ' ')
+  .trim();
+
+const cacheKey = `terraquery:query:${normalizedQuestion}`;
+
+if (redisReady) {
+  try {
+    const cachedResponse = await redisClient.get(cacheKey);
+
+    if (cachedResponse) {
+      console.log('⚡ Redis cache HIT');
+      return sendJSON(res, 200, JSON.parse(cachedResponse));
+    }
+  } catch (err) {
+    console.warn('⚠️ Cache read failed; running normal query:', err.message);
+  }
+}
+
+console.log('🔎 Redis cache MISS');
 
       // ---------------------------------------------------
       // STEP 1: Gemini generates MongoDB query
@@ -256,36 +306,48 @@ console.log(explanation);
       // STEP 4: Return result to frontend
       // ---------------------------------------------------
 
-      return sendJSON(res, 200, {
-        success: true,
+      const response = {
+  success: true,
+  question,
 
-        question,
+  ai: {
+    provider: 'Google Gemini',
+    model: 'gemini-3.5-flash-lite'
+  },
 
-        ai: {
-          provider: 'Google Gemini',
-          model: 'gemini-3.5-flash-lite'
-        },
+  database: {
+    engine: 'MongoDB Atlas',
+    database: 'terraquery',
+    collection: 'rainfall'
+  },
 
-        database: {
-          engine: 'MongoDB Atlas',
-          database: 'terraquery',
-          collection: 'rainfall'
-        },
+  query: generatedQuery,
+  visualization,
+  validation: {
+    passed: true,
+    readOnly: true
+  },
 
-        query: generatedQuery,
-        visualization,
-        validation: {
-          passed: true,
-          readOnly: true
-        },
+  result: {
+    count: results.length,
+    records: results
+  },
+  explanation,
+  timestamp: new Date().toISOString()
+};
 
-        result: {
-          count: results.length,
-          records: results
-        },
-        explanation,
-        timestamp: new Date().toISOString()
-      });
+if (redisReady) {
+  try {
+    await redisClient.set(cacheKey, JSON.stringify(response), {
+      EX: 300
+    });
+    console.log('💾 Cached response for 5 minutes');
+  } catch (err) {
+    console.warn('⚠️ Cache write failed:', err.message);
+  }
+}
+
+return sendJSON(res, 200, response);
     }
     // =====================================================
     // MAP RAINFALL DATA
@@ -549,32 +611,31 @@ console.log(explanation);
     }
 
     // =====================================================
-    // 6. LEGACY ORACLE PROFILE ENDPOINT
+    // 6. STACK PROFILE & LEGACY COMPATIBILITY ENDPOINT
     // =====================================================
 
     if (
-      pathname === '/api/oracle-profile' &&
+      (pathname === '/api/stack-profile' || pathname === '/api/oracle-profile') &&
       req.method === 'GET'
     ) {
 
       return sendJSON(res, 200, {
-
-        status: 'LEGACY',
-
-        message:
-          'Oracle Select AI was part of the original TerraQuery prototype. The active architecture now uses Gemini and MongoDB Atlas.',
-
-        previousProfile:
-          'CLIMATE_INTEL_PROFILE',
-
-        previousTargetDatabase:
-          'Oracle AI Database 26ai',
-
+        status: 'ACTIVE',
+        stack: {
+          frontend: 'React + Vite',
+          ai: 'Google Gemini',
+          database: 'MongoDB Atlas',
+          dataset: 'IMD rainfall records',
+          queryPipeline: 'natural-language question → Gemini query generation → validated, read-only MongoDB query → results and grounded explanation'
+        },
         currentArchitecture: {
           ai: 'Google Gemini',
           database: 'MongoDB Atlas',
           collection: 'rainfall'
-        }
+        },
+        legacyNotice: pathname === '/api/oracle-profile'
+          ? 'Notice: /api/oracle-profile is a deprecated legacy compatibility endpoint. Use /api/stack-profile for active stack metadata.'
+          : undefined
       });
     }
 

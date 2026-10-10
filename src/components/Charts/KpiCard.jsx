@@ -75,7 +75,7 @@ export default function KpiCard({
         justifyContent: 'space-between',
         gap: '8px'
       }}>
-        <span>{sublabel || 'Verified query output from Oracle AI Database 26ai'}</span>
+        <span>{sublabel || 'Verified query output from MongoDB Atlas'}</span>
         <span className="pill pill-emerald" style={{ fontSize: '0.65rem' }}>
           <CheckCircle size={10} /> GROUNDED
         </span>
